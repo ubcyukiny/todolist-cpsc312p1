@@ -54,6 +54,7 @@ showCurrentTasks tasks = do {
   -- Print prompts
   putStrLn "To add a task, enter a";
   putStrLn "To remove a task, enter r";
+  putStrLn "To remove ALL tasks, enter x";
   putStrLn "To quit, enter q";
   -- Get input
   res <- getLine;
@@ -103,14 +104,39 @@ removeTask tasks = do
     -- Go back to main
     showCurrentTasks newTasks;
   
+-- Remove all tasks from todo
+removeAllTasks :: IO ()
+removeAllTasks = do {
+  -- Double check with User
+  putStrLn "Are you sure you want to delete ALL tasks? (y/n)";
+  -- Get input
+  answer <- getLine;
+  -- Handle Yes
+  if (answer == "y") then do {
+    -- Write empty string to file
+    writeFile fileName "";
+    putStrLn "All Tasks Successfully Removed!";
+    showCurrentTasks [];
+  -- Handle No
+  } else if (answer == "n") then do {
+    -- Go back
+    showCurrentTasks []
+  -- Handle invalid input
+  } else do {
+    putStrLn "Please enter either 'y' or 'n' only!";
+    removeAllTasks
+  }
+}
+
 -- Handle inputs 
 handleInput :: [String] -> String -> IO ()
 handleInput tasks res
   | res == "a" = addTask tasks
   | res == "r" = removeTask tasks
+  | res == "x" = removeAllTasks
   | res == "q" = putStrLn "Aborting..."
   | otherwise = do {
-    putStrLn "Please enter a or q only!";
+    putStrLn "Please enter a,r,x or q only!";
     res <- getLine;
     handleInput tasks res
   }
