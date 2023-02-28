@@ -62,20 +62,37 @@ showCurrentTasks tasks = do {
   handleInput tasks res
 }
 
--- Goes through task list and prints each task with its index.
+-- Goes through task list and prints each task with its index, due date in different color according to how urgent it is.
 printTasks :: [String] -> Int -> IO ()
 printTasks [] _ = return ()
 printTasks (task:tasks) index = do {
-  putStrLn (show index ++ ". " ++ task);
+  putStrLn ((getColorByUrgent (head task)) ++ show index ++ ". " ++ (tail task) ++ "\x1b[0m");
   printTasks tasks (index + 1)
 }
+
+-- gets textColor by urgentNo
+getColorByUrgent :: Char -> [Char]
+getColorByUrgent urgentNo
+  -- green
+  | urgentNo == '1' = "\x1b[32m"
+  -- yellow
+  | urgentNo == '2' = "\x1b[33m"
+  -- red
+  | urgentNo == '3' = "\x1b[31m"
+  -- k = 0, basic color
+  | otherwise = "\x1b[0m"
+
 
 -- Add tasks to task list and update file
 addTask :: [String] -> IO ()
 addTask tasks = do 
   putStrLn "Enter Task"
   task <- getLine
-  let newTasks = tasks++[task]
+  putStrLn "Enter due date"
+  dueDate <- getLine
+  putStrLn "How urgent is this? Enter 0 to 3, 3 being most urgent"
+  urgent <- getLine
+  let newTasks = tasks++[urgent ++ task ++ ", due by " ++ dueDate]
   saveTasks newTasks
   putStrLn "Task added!"
   putStrLn "going back to main page..."
