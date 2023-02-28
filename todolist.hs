@@ -82,21 +82,56 @@ getColorByUrgent urgentNo
   -- k = 0, basic color
   | otherwise = "\x1b[0m"
 
-
 -- Add tasks to task list and update file
 addTask :: [String] -> IO ()
-addTask tasks = do 
+addTask tasks = do
   putStrLn "Enter Task"
   task <- getLine
-  putStrLn "Enter due date"
-  dueDate <- getLine
-  putStrLn "How urgent is this? Enter 0 to 3, 3 being most urgent"
-  urgent <- getLine
-  let newTasks = tasks++[urgent ++ task ++ ", due by " ++ dueDate]
-  saveTasks newTasks
-  putStrLn "Task added!"
-  putStrLn "going back to main page..."
-  showCurrentTasks newTasks
+  -- get task date
+  putStrLn "Enter due year eg.2023 or 2024";
+  dueYear <- getLine
+  putStrLn "Enter due month eg. 1/2/3/.../12";
+  dueMonth <- getLine
+  putStrLn "Enter due day eg. 1/2/3/..../31, make sure it matches the month (no 30th in Feb)"
+  dueDay <- getLine
+  -- check task date
+  if (not (isDateValid (read dueDay) (read dueMonth) (read dueYear)))
+    then do
+      -- if failed check, start again
+      putStrLn "invalid date"
+      addTask tasks
+    else do
+      putStrLn "How urgent is this? Enter 0 to 3, 3 being most urgent"
+      urgentNo <- getLine
+      -- check priority number is 0 to 3
+      if (not (urgencyCheck urgentNo))
+      then do
+        -- if failed check, start again
+        putStrLn "invalid piority number"
+        addTask tasks
+      else do
+        -- add to tasks if checks pass
+        let newTasks = tasks++[urgentNo ++ task ++ ", due by " ++ dueDay ++ "/" ++ dueMonth ++ "/" ++ dueYear]
+        saveTasks newTasks
+        putStrLn "Task added!"
+        putStrLn "going back to main page..."
+        showCurrentTasks newTasks
+
+-- checks if urgentNo is between 0 to 3
+urgencyCheck :: [Char] -> Bool
+urgencyCheck urgentNo
+  | (read urgentNo < 4 && read urgentNo >= 0) = True
+  | otherwise = False
+
+-- checks if the date user provided is valid
+isDateValid :: Int -> Int -> Int -> Bool
+isDateValid d m y
+  | y < 2023                       = False
+  | m `elem` [1,3,5,7,8,10,12]     = d <= 31
+  | m `elem` [4,6,9,11]            = d <= 30
+  | m == 2                         = d <= if isLeapYear y then 29 else 28
+  | otherwise                      = False
+  where isLeapYear y = (y `mod` 4 == 0) && (y `mod` 100 /= 0 || y `mod` 400 == 0)
 
 -- Remove task using index number
 removeTask :: [String] -> IO ()
