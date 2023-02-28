@@ -3,6 +3,12 @@
 -- :load todolist
 -- main
 
+import System.IO
+import System.Directory
+
+fileName = "tasks.txt"
+
+
 main = do {
   putStrLn "This is a todo list app";
   putStrLn "Do you want to continue? (y/n)";
@@ -11,7 +17,9 @@ main = do {
   }
 
 continue ans
-  | ans == "y" = showCurrentTasks
+  | ans == "y" = do
+      tasks <- loadTasks
+      showCurrentTasks tasks
   | ans == "n" = putStrLn "Aborting..."
   | otherwise = do {
     putStrLn "Please enter y or n only!";
@@ -20,28 +28,53 @@ continue ans
     continue yn
     }
 
-showCurrentTasks = do {
+loadTasks :: IO [String]
+loadTasks = do
+  fileExists <- doesFileExist fileName
+  if fileExists
+    then do
+      contents <- readFile fileName
+      return (lines contents)
+    else return []
+
+showCurrentTasks :: [String] -> IO ()
+showCurrentTasks tasks = do {
   putStrLn "This is your current todo list";
   putStrLn "------------------------------";
-  -- display current todo tasks
+  printTasks tasks 0;
   putStrLn "To add a task, enter a";
   putStrLn "To quit, enter q";
   res <- getLine;
-  addTaskOrQuit res
+  addTaskOrQuit tasks res
 }
 
-addTask = do {
-  -- add task function here
-  putStrLn "Task added!";
-  putStrLn "going back to main page...";
-  showCurrentTasks
+printTasks :: [String] -> Int -> IO ()
+printTasks [] _ = return ()
+printTasks (task:tasks) index = do {
+  putStrLn (show index ++ ". " ++ task);
+  printTasks tasks (index + 1)
 }
 
-addTaskOrQuit res
-  | res == "a" = addTask
+addTask :: [String] -> IO ()
+addTask tasks = do 
+  putStrLn "Enter Task"
+  task <- getLine
+  let newTasks = tasks++[task]
+  saveTasks newTasks
+  putStrLn "Task added!"
+  putStrLn "going back to main page..."
+  showCurrentTasks newTasks
+
+
+addTaskOrQuit :: [String] -> String -> IO ()
+addTaskOrQuit tasks res
+  | res == "a" = addTask tasks
   | res == "q" = putStrLn "Aborting..."
   | otherwise = do {
     putStrLn "Please enter a or q only!";
     res <- getLine;
-    addTaskOrQuit res
+    addTaskOrQuit tasks res
   }
+
+saveTasks :: [String] -> IO ()
+saveTasks tasks = writeFile fileName (unlines tasks);
